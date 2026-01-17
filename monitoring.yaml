@@ -1,0 +1,40 @@
+---
+- name: Advanced Linux Server Health Monitoring using Ansible
+  hosts: servers
+  become: yes
+
+  tasks:
+
+    - name: Get system uptime
+      command: uptime
+      register: uptime_output
+
+    - name: Get memory usage
+      command: free -m
+      register: memory_output
+
+    - name: Get disk usage
+      command: df -h /
+      register: disk_output
+
+    - name: Extract disk usage percentage
+      set_fact:
+        disk_used: "{{ disk_output.stdout_lines[1].split()[4] | regex_replace('%','') | int }}"
+
+    - name: Display system uptime
+      debug:
+        msg: "{{ uptime_output.stdout }}"
+
+    - name: Display memory usage
+      debug:
+        msg: "{{ memory_output.stdout }}"
+
+    - name: Display disk usage
+      debug:
+        msg: "Disk usage is {{ disk_used }}%"
+
+    - name: Disk usage warning
+      debug:
+        msg: "WARNING: Disk usage above 80%"
+      when: (disk_used | int) > 80
+
